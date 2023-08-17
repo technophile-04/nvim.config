@@ -15,3 +15,11 @@ vim.keymap.set("n", "<C-P>", "<leader>ff")
 
 -- Save file
 vim.keymap.set("n", "<leader>w", "<cmd>w<cr>", { noremap = true, desc = "Save window" })
+
+-- Close all buffers expect current
+vim.keymap.set(
+  "n",
+  "<leader>bc",
+  "<cmd>w <bar> %bd <bar> e# <bar> bd# <CR>",
+  { noremap = true, desc = "Close all buffers" }
+)
