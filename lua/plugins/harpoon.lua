@@ -4,49 +4,43 @@ return {
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
+    branch = "harpoon2",
     cmd = { "Harpoon" },
     keys = {
       {
         "<leader>a",
         function()
-          require("harpoon.mark").add_file()
+          require("harpoon"):list():append()
         end,
         desc = "Harpoon Add file",
       },
       {
         "<C-e>",
         function()
-          require("harpoon.ui").toggle_quick_menu()
+          require("harpoon").ui:toggle_quick_menu(require("harpoon"):list())
         end,
         desc = "Toggle quick menu",
       },
       {
-        "<C-j>",
+        "<M-j>",
         function()
-          require("harpoon.ui").nav_file(1)
+          require("harpoon"):list():select(1)
         end,
         desc = "Nav file 1",
       },
       {
-        "<C-k>",
+        "<M-k>",
         function()
-          require("harpoon.ui").nav_file(2)
+          require("harpoon"):list():select(2)
         end,
         desc = "Nav file 2",
       },
       {
-        "<C-l>",
+        "<M-l>",
         function()
-          require("harpoon.ui").nav_file(3)
+          require("harpoon"):list():select(2)
         end,
         desc = "Nav file 3",
-      },
-      {
-        "<C-;>",
-        function()
-          require("harpoon.ui").nav_file(4)
-        end,
-        desc = "Nav file 4",
       },
     },
   },
