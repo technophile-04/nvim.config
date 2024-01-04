@@ -38,7 +38,7 @@ return {
       {
         "<M-l>",
         function()
-          require("harpoon"):list():select(2)
+          require("harpoon"):list():select(3)
         end,
         desc = "Nav file 3",
       },
