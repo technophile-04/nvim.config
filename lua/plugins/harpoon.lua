@@ -42,6 +42,13 @@ return {
         end,
         desc = "Nav file 3",
       },
+      {
+        "<M-;>",
+        function()
+          require("harpoon"):list():select(4)
+        end,
+        desc = "Nav file 4",
+      },
     },
     config = function()
       local harpoon = require("harpoon")
