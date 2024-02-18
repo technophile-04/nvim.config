@@ -15,6 +15,15 @@ return {
         end,
         desc = "Find Plugin File",
       },
+      {
+        "<leader>fd",
+        function()
+          require("telescope.builtin").find_files({
+            find_command = { "rg", "--files", "--hidden", "--glob", "!.*" },
+          })
+        end,
+        desc = "Find Files (Ignore Dot Files)",
+      },
     },
   },
 }
