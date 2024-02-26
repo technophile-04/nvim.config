@@ -6,6 +6,13 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
   },
+  keys = {
+    { "<leader>on", "<cmd>ObsidianNew<cr>", desc = "New Obsidian note", mode = "n" },
+    { "<leader>oo", "<cmd>ObsidianSearch<cr>", desc = "Search Obsidian notes", mode = "n" },
+    { "<leader>os", "<cmd>ObsidianQuickSwitch<cr>", desc = "Quick Switch", mode = "n" },
+    { "<leader>ob", "<cmd>ObsidianBacklinks<cr>", desc = "Show location list of backlinks", mode = "n" },
+    { "<leader>ot", "<cmd>ObsidianTemplate<cr>", desc = "Add template", mode = "n" },
+  },
   opts = {
     workspaces = {
       {
@@ -23,18 +30,18 @@ return {
     new_notes_location = "notes_subdir",
     mappings = {
       -- Overrides the 'gf' mapping to work on markdown/wiki links within your vault.
-      ["gf"] = {
+      ["<leader>of"] = {
         action = function()
           return require("obsidian").util.gf_passthrough()
         end,
         opts = { noremap = false, expr = true, buffer = true },
       },
-      -- Toggle check-boxes.
-      ["<leader>ch"] = {
+      -- Toggle check-boxes "obsidian done"
+      ["<leader>od"] = {
         action = function()
           return require("obsidian").util.toggle_checkbox()
         end,
-        opts = { buffer = true, desc = "Obsidian: Toggle checkbox" },
+        opts = { buffer = true },
       },
     },
     templates = {
