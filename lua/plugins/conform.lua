@@ -1,4 +1,4 @@
-local prettierOrBiome = { "biome" }
+local prettierOrBiome = { "prettier" }
 return {
   -- Use Biome instead of prettier / eslint
   {
