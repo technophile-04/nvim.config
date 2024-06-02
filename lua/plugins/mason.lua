@@ -5,6 +5,7 @@ return {
       "stylua",
       "shellcheck",
       "biome",
+      "graphql-language-service-cli",
     },
   },
 }
