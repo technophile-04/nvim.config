@@ -4,6 +4,6 @@ return {
     servers = {
       graphql = {},
     },
-    inlay_hints = { enable = false },
+    inlay_hints = { enabled = false },
   },
 }
