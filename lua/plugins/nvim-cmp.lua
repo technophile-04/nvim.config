@@ -1,57 +1,145 @@
--- nvim-cmp configs
 return {
-  -- customize nvim-cmp configs
-  -- Use <tab> for completion and snippets (supertab)
-  -- first: disable default <tab> and <s-tab> behavior in LuaSnip
   {
-    "L3MON4D3/LuaSnip",
-    keys = function()
-      return {}
-    end,
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    build = ":Copilot auth",
+    opts = {
+      suggestion = { enabled = false },
+      panel = { enabled = false },
+      filetypes = {
+        markdown = true,
+        help = true,
+      },
+    },
   },
-  -- then: setup supertab in cmp
   {
     "hrsh7th/nvim-cmp",
+    version = false, -- last release is way too old
+    event = "InsertEnter",
     dependencies = {
-      "hrsh7th/cmp-emoji",
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      {
+        "zbirenbaum/copilot-cmp",
+        dependencies = "copilot.lua",
+        opts = {},
+        config = function(_, opts)
+          local copilot_cmp = require("copilot_cmp")
+          copilot_cmp.setup(opts)
+          -- attach cmp source whenever copilot attaches
+          -- fixes lazy-loading issues with the copilot cmp source
+          LazyVim.lsp.on_attach(function(client)
+            copilot_cmp._on_insert_enter({})
+          end, "copilot")
+        end,
+      },
     },
-    ---@param opts cmp.ConfigSchema
-    opts = function(_, opts)
-      local has_words_before = function()
-        unpack = unpack or table.unpack
-        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-        return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+    opts = function()
+      vim.api.nvim_set_hl(0, "CmpGhostText", { link = "Comment", default = true })
+      local cmp = require("cmp")
+      local defaults = require("cmp.config.default")()
+      return {
+        auto_brackets = {}, -- configure any filetype to auto add brackets
+        completion = {
+          completeopt = "menu,menuone,noinsert",
+        },
+        mapping = cmp.mapping.preset.insert({
+          ["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+          ["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+          ["<C-b>"] = cmp.mapping.scroll_docs(-4),
+          ["<C-f>"] = cmp.mapping.scroll_docs(4),
+          ["<C-y>"] = cmp.mapping.confirm({ select = true }),
+          ["<C-Space>"] = cmp.mapping.complete(),
+          ["<C-e>"] = cmp.mapping.abort(),
+          ["<C-CR>"] = function(fallback)
+            cmp.abort()
+            fallback()
+          end,
+        }),
+        sources = cmp.config.sources({
+          { name = "nvim_lsp" },
+          { name = "copilot" },
+          { name = "path" },
+        }, {
+          { name = "buffer" },
+        }),
+        formatting = {
+          format = function(_, item)
+            local icons = require("lazyvim.config").icons.kinds
+            if icons[item.kind] then
+              item.kind = icons[item.kind] .. item.kind
+            end
+            return item
+          end,
+        },
+        experimental = {
+          ghost_text = {
+            hl_group = "CmpGhostText",
+          },
+        },
+        sorting = defaults.sorting,
+      }
+    end,
+    ---@param opts cmp.ConfigSchema | {auto_brackets?: string[]}
+    config = function(_, opts)
+      for _, source in ipairs(opts.sources) do
+        source.group_index = source.group_index or 1
       end
 
-      local luasnip = require("luasnip")
-      local cmp = require("cmp")
+      local parse = require("cmp.utils.snippet").parse
+      require("cmp.utils.snippet").parse = function(input)
+        local ok, ret = pcall(parse, input)
+        if ok then
+          return ret
+        end
+        return LazyVim.cmp.snippet_preview(input)
+      end
 
-      -- This is reaaaally not easy to setup :D
-      opts.mapping = vim.tbl_extend("force", opts.mapping, {
-        ["<Tab>"] = cmp.mapping(function(fallback)
-          -- If it's a snippet then jump between fields
-          if luasnip.expand_or_jumpable() then
-            luasnip.expand_or_jump()
-          -- otherwise if the completion pop is visible then complete
-          elseif cmp.visible() then
-            cmp.confirm({ select = false })
-          -- if the popup is not visible then open the popup
-          elseif has_words_before() then
-            cmp.complete()
-          -- otherwise fallback
-          else
-            fallback()
+      local cmp = require("cmp")
+      cmp.setup(opts)
+      cmp.event:on("confirm_done", function(event)
+        if vim.tbl_contains(opts.auto_brackets or {}, vim.bo.filetype) then
+          LazyVim.cmp.auto_brackets(event.entry)
+        end
+      end)
+      cmp.event:on("menu_opened", function(event)
+        LazyVim.cmp.add_missing_snippet_docs(event.window)
+      end)
+    end,
+  },
+  {
+    "nvim-lualine/lualine.nvim",
+    opts = function(_, opts)
+      local colors = {
+        [""] = LazyVim.ui.fg("Special"),
+        ["Normal"] = LazyVim.ui.fg("Special"),
+        ["Warning"] = LazyVim.ui.fg("DiagnosticError"),
+        ["InProgress"] = LazyVim.ui.fg("DiagnosticWarn"),
+      }
+      table.insert(opts.sections.lualine_x, 2, {
+        function()
+          local icon = require("lazyvim.config").icons.kinds.Copilot
+          local status = require("copilot.api").status.data
+          return icon .. (status.message or "")
+        end,
+        cond = function()
+          if not package.loaded["copilot"] then
+            return
           end
-        end, { "i", "s" }),
-        ["<S-Tab>"] = cmp.mapping(function(fallback)
-          if cmp.visible() then
-            cmp.select_prev_item()
-          elseif luasnip.jumpable(-1) then
-            luasnip.jump(-1)
-          else
-            fallback()
+          local ok, clients = pcall(LazyVim.lsp.get_clients, { name = "copilot", bufnr = 0 })
+          if not ok then
+            return false
           end
-        end, { "i", "s" }),
+          return ok and #clients > 0
+        end,
+        color = function()
+          if not package.loaded["copilot"] then
+            return
+          end
+          local status = require("copilot.api").status.data
+          return colors[status.status] or colors[""]
+        end,
       })
     end,
   },
