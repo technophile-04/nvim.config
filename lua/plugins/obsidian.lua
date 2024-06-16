@@ -17,7 +17,7 @@ return {
     workspaces = {
       {
         name = "shivVault",
-        path = "~/Documents/ObsidianVault/shiv",
+        path = "~/Desktop/Github/ObsidianVault/shiv",
       },
     },
     completion = {
